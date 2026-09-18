@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Student Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF9F4;
+    --paper-raised:#FFFFFF;
+    --ink:#1E2A22;
+    --ink-soft:#5C6B60;
+    --ink-faint:#94A399;
+    --rule:#E1DCCC;
+    --margin:#BE5A52;
+    --accent:#2C4A3E;
+    --accent-dark:#1D332A;
+    --accent-soft:#E7EFE9;
+    --maths:#33517D;
+    --maths-soft:#E7ECF4;
+    --physics:#A8672A;
+    --physics-soft:#F6ECDF;
+    --chem:#3E7D5C;
+    --chem-soft:#E6F1EA;
+    --danger:#B23A34;
+    --danger-soft:#F8E9E7;
+    --ok:#2E7D4F;
+    --radius:10px;
+    --radius-lg:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+  ::selection{background:var(--accent-soft);}
+
+  button, a, input, .checkbox-btn, .student-name{
+    touch-action:manipulation;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  input{ -webkit-user-select:text; user-select:text; }
+  button:focus, .checkbox-btn:focus, .student-name:focus{ outline:none; }
+  button:focus-visible, .checkbox-btn:focus-visible, .student-name:focus-visible, input:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
+
+  /* ---------- Top header ---------- */
+  header.app-header{
+    background:var(--paper-raised);
+    border-bottom:1px solid var(--rule);
+    padding:22px 18px 18px;
+    position:sticky;
+    top:0;
+    z-index:20;
+  }
+  .header-inner{
+    max-width:760px;
+    margin:0 auto;
+    position:relative;
+    padding-left:16px;
+  }
+  .header-inner::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:2px;
+    bottom:2px;
+    width:2px;
+    background:var(--margin);
+    opacity:.55;
+  }
+  h1.title{
+    font-family:'Source Serif 4',serif;
+    font-weight:700;
+    font-size:28px;
+    margin:0 0 2px;
+    letter-spacing:-0.01em;
+  }
+  .subtitle{
+    color:var(--ink-soft);
+    font-size:13px;
+    margin:0 0 18px;
+  }
+
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .field-group{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  input[type="text"], input[type="date"]{
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    padding:10px 12px;
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    background:var(--paper);
+    color:var(--ink);
+    outline:none;
+    min-width:0;
+  }
+  input[type="text"]:focus, input[type="date"]:focus{
+    border-color:var(--accent);
+    background:#fff;
+  }
+  #newStudentName{ flex:1; min-width:140px; }
+
+  button{ font-family:'Inter',sans-serif; cursor:pointer; appearance:none; -webkit-appearance:none; background-color:transparent; }
+  .btn{
+    border:none;
+    border-radius:var(--radius);
+    padding:10px 16px;
+    font-size:14px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .btn-primary{ background:var(--accent); color:#fff; }
+  .btn-primary:hover{ background:var(--accent-dark); }
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--rule);
+    color:var(--ink);
+  }
+  .btn-ghost:hover{ border-color:var(--accent); color:var(--accent); }
+  .btn-danger{ background:var(--danger); color:#fff; }
+  .btn-danger:hover{ background:#8f2d28; }
+  .btn-sm{ padding:7px 12px; font-size:13px; }
+
+  .meta-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:18px 28px;
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px dashed var(--rule);
+  }
+  .meta-item label{
+    display:block;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-faint);
+    font-weight:600;
+    margin-bottom:5px;
+  }
+  .week-range{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-left:8px;
+  }
+
+  /* ---------- Main list ---------- */
+  main{
+    max-width:760px;
+    margin:0 auto;
+    padding:20px 16px 40px;
+  }
+  .empty-state{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--ink-soft);
+  }
+  .empty-state .big{
+    font-family:'Source Serif 4',serif;
+    font-size:20px;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+
+  .student-card{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:var(--radius-lg);
+    margin-bottom:14px;
+    position:relative;
+    overflow:hidden;
+    padding:16px 16px 14px 22px;
+  }
+  .student-card::before{
+    content:"";
+    position:absolute;
+    left:12px;
+    top:0;
+    bottom:0;
+    width:2px;
+    background:var(--margin);
+    opacity:.4;
+  }
+  .card-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .student-name{
+    font-family:'Source Serif 4',serif;
+    font-weight:600;
+    font-size:19px;
+    cursor:pointer;
+    padding:2px 4px;
+    border-radius:6px;
+  }
+  .student-name:hover{ background:var(--accent-soft); }
+  .name-edit-input{
+    font-family:'Source Serif 4',serif;
+    font-weight:600;
+    font-size:19px;
+    border:1px solid var(--accent);
+    border-radius:6px;
+    padding:2px 6px;
+    background:#fff;
+    width:180px;
+  }
+  .card-actions{
+    display:flex;
+    gap:8px;
+    flex-shrink:0;
+  }
+
+  .subject-block{ margin-bottom:10px; }
+  .subject-block:last-child{ margin-bottom:0; }
+  .block-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-faint);
+    font-weight:600;
+    margin-bottom:8px;
+  }
+  .subject-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+  }
+  .subject-cell{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    padding:10px 6px 8px;
+    border-radius:10px;
+    border:1px solid var(--rule);
+    background:var(--paper);
+  }
+  .subject-cell .subj-name{
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink-soft);
+  }
+  .subject-cell.maths .subj-name{ color:var(--maths); }
+  .subject-cell.physics .subj-name{ color:var(--physics); }
+  .subject-cell.chem .subj-name{ color:var(--chem); }
+
+  .checkbox-btn{
+    width:46px;
+    height:46px;
+    border-radius:9px;
+    border:2px solid var(--rule);
+    background:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:transform .06s ease, background .12s ease, border-color .12s ease;
+  }
+  .checkbox-btn:active{ transform:scale(.93); }
+  .checkbox-btn svg{ width:24px; height:24px; opacity:0; transition:opacity .1s ease; }
+  .checkbox-btn.checked svg{ opacity:1; }
+  .checkbox-btn.checked.maths{ background:var(--maths); border-color:var(--maths); }
+  .checkbox-btn.checked.physics{ background:var(--physics); border-color:var(--physics); }
+  .checkbox-btn.checked.chem{ background:var(--chem); border-color:var(--chem); }
+
+  /* ---------- Records page ---------- */
+  .records-header{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:18px;
+  }
+  .back-link{
+    background:none;
+    border:none;
+    color:var(--accent);
+    font-weight:600;
+    font-size:14px;
+    padding:8px 4px;
+  }
+  .records-title{
+    font-family:'Source Serif 4',serif;
+    font-size:24px;
+    font-weight:700;
+  }
+  .section-card{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:var(--radius-lg);
+    padding:18px 16px;
+    margin-bottom:16px;
+  }
+  .section-title{
+    font-family:'Source Serif 4',serif;
+    font-size:16px;
+    font-weight:600;
+    margin:0 0 12px;
+  }
+  .table-wrap{ overflow-x:auto; }
+  table.reg-table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    min-width:360px;
+  }
+  table.reg-table th, table.reg-table td{
+    padding:9px 8px;
+    text-align:center;
+    border-bottom:1px solid var(--rule);
+  }
+  table.reg-table th{
+    text-transform:uppercase;
+    font-size:10px;
+    letter-spacing:.05em;
+    color:var(--ink-faint);
+    font-weight:600;
+  }
+  table.reg-table td:first-child, table.reg-table th:first-child{
+    text-align:left;
+    color:var(--ink-soft);
+  }
+  .mark{ display:inline-flex; width:20px; height:20px; border-radius:5px; align-items:center; justify-content:center; }
+  .mark.yes{ background:var(--chem-soft); color:var(--ok); }
+  .mark.no{ background:var(--danger-soft); color:var(--danger); }
+
+  .stats-row{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    margin-top:14px;
+  }
+  @media (min-width:480px){ .stats-row{ grid-template-columns:repeat(4,1fr);} }
+  .stat-box{
+    background:var(--paper);
+    border:1px solid var(--rule);
+    border-radius:10px;
+    padding:10px 8px;
+    text-align:center;
+  }
+  .stat-box .num{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:16px;
+  }
+  .stat-box.maths .num{ color:var(--maths); }
+  .stat-box.physics .num{ color:var(--physics); }
+  .stat-box.chem .num{ color:var(--chem); }
+  .stat-box .lbl{ font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); margin-top:3px; }
+
+  .no-data{ color:var(--ink-faint); font-size:13px; padding:6px 0; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(20,26,22,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:100;
+    padding:20px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-box{
+    background:#fff;
+    border-radius:var(--radius-lg);
+    padding:22px;
+    max-width:320px;
+    width:100%;
+    box-shadow:0 12px 40px rgba(0,0,0,.2);
+  }
+  .modal-box p{
+    font-size:15px;
+    line-height:1.5;
+    margin:0 0 18px;
+  }
+  .modal-box .stu-name{ font-weight:700; }
+  .modal-actions{ display:flex; gap:10px; justify-content:flex-end; }
+
+  @media (max-width:420px){
+    h1.title{ font-size:24px; }
+    .checkbox-btn{ width:40px; height:40px; }
+  }
+
+  /* ---------- Backup banner ---------- */
+  .banner{
+    max-width:760px;
+    margin:14px auto 0;
+    padding:12px 14px;
+    border-radius:var(--radius);
+    font-size:13px;
+    line-height:1.45;
+    display:none;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+  }
+  .banner.show{ display:flex; }
+  .banner-error{ background:var(--danger-soft); color:var(--danger); border:1px solid var(--danger); }
+  .banner-warn{ background:#FBF3D6; color:#6B5A12; border:1px solid #E3C765; }
+  .banner-info{ background:var(--accent-soft); color:var(--accent-dark); border:1px solid var(--accent); }
+  .banner-actions{ display:flex; gap:8px; flex-shrink:0; }
+  .banner button.btn{ padding:6px 12px; font-size:12px; }
+  .banner .banner-dismiss{
+    background:transparent; border:none; color:inherit; font-weight:700;
+    padding:4px 6px; font-size:14px; cursor:pointer; line-height:1;
+  }
+
+  /* ---------- Import/Export controls ---------- */
+  .io-controls{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* ---------- Search row ---------- */
+  .search-row{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  #studentSearch{ flex:1; min-width:160px; }
+
+  /* ---------- Pending page ---------- */
+  .pending-header{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:6px;
+  }
+  .pending-sub{
+    color:var(--ink-soft);
+    font-size:13px;
+    margin:0 0 18px;
+  }
+  .pending-subject-card{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:var(--radius-lg);
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .pending-subject-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .pending-subject-title{
+    font-family:'Source Serif 4',serif;
+    font-weight:600;
+    font-size:16px;
+  }
+  .pending-subject-card.maths .pending-subject-title{ color:var(--maths); }
+  .pending-subject-card.physics .pending-subject-title{ color:var(--physics); }
+  .pending-subject-card.chem .pending-subject-title{ color:var(--chem); }
+  .pending-count{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:999px;
+    background:var(--paper);
+    border:1px solid var(--rule);
+    color:var(--ink-soft);
+  }
+  .pending-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .pending-list li{
+    font-size:13px;
+    padding:7px 11px;
+    border-radius:8px;
+    background:var(--paper);
+    border:1px solid var(--rule);
+  }
+  .pending-subject-card.maths .pending-list li{ border-color:var(--maths-soft); }
+  .pending-subject-card.physics .pending-list li{ border-color:var(--physics-soft); }
+  .pending-subject-card.chem .pending-list li{ border-color:var(--chem-soft); }
+  .pending-all-clear{
+    color:var(--ink-faint);
+    font-size:13px;
+    padding:4px 0;
+  }
+  .pending-section-title{
+    font-family:'Source Serif 4',serif;
+    font-size:19px;
+    font-weight:600;
+    margin:22px 0 12px;
+  }
+  .pending-section-title:first-of-type{ margin-top:0; }
+
+  /* ---------- Toast (undo) ---------- */
+  .toast-stack{
+    position:fixed;
+    left:0; right:0; bottom:16px;
+    display:flex; flex-direction:column; align-items:center;
+    gap:8px;
+    z-index:200;
+    pointer-events:none;
+  }
+  .toast{
+    pointer-events:auto;
+    background:var(--accent-dark);
+    color:#fff;
+    padding:11px 14px;
+    border-radius:var(--radius);
+    font-size:13px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);
+    max-width:92vw;
+  }
+  .toast button{
+    background:transparent;
+    border:1px solid rgba(255,255,255,.5);
+    color:#fff;
+    font-weight:600;
+    font-size:12px;
+    padding:5px 10px;
+    border-radius:7px;
+    white-space:nowrap;
+  }
+  .toast button:hover{ background:rgba(255,255,255,.15); }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <h1 class="title">Student Tracker</h1>
+    <p class="subtitle">Daily homework &amp; weekly error notes — class register</p>
+
+    <div class="controls">
+      <div class="field-group" style="flex:1; min-width:220px;">
+        <input type="text" id="newStudentName" placeholder="Student name" maxlength="40">
+        <button class="btn btn-primary" id="addStudentBtn">Add Student</button>
+      </div>
+      <div class="io-controls">
+        <button class="btn btn-ghost" id="exportBtn" title="Download a backup file">Export Backup</button>
+        <button class="btn btn-ghost" id="importBtn" title="Restore from a backup file">Import Backup</button>
+        <button class="btn btn-ghost" id="exportExcelBtn" title="Download an Excel spreadsheet">Export Excel</button>
+        <button class="btn btn-ghost" id="exportPdfBtn" title="Download a PDF report">Export PDF</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none;">
+      </div>
+    </div>
+
+    <div class="search-row">
+      <input type="text" id="studentSearch" placeholder="Search students…" autocomplete="off">
+      <button class="btn btn-ghost" id="pendingBtn">Today's Pending</button>
+    </div>
+
+    <div class="meta-row">
+      <div class="meta-item">
+        <label>Homework Date</label>
+        <input type="date" id="hwDate">
+      </div>
+      <div class="meta-item">
+        <label>Error Notes Week</label>
+        <input type="date" id="enWeekPicker">
+        <span class="week-range" id="weekRangeDisplay"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div id="bannerArea" style="max-width:760px; margin:0 auto; padding:0 16px;"></div>
+
+<main id="mainView">
+  <div id="studentList"></div>
+</main>
+
+<main id="recordsView" style="display:none;"></main>
+
+<main id="pendingView" style="display:none;"></main>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<div class="modal-overlay" id="removeModal">
+  <div class="modal-box">
+    <p>Remove <span class="stu-name" id="removeModalName"></span>?<br>This will remove the student and their records.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="cancelRemoveBtn">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="confirmRemoveBtn">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- Storage ---------------- */
+  const LS_STUDENTS = 'st_students';
+  const LS_HOMEWORK = 'st_homework';
+  const LS_ERRORNOTES = 'st_errornotes';
+  const LS_LAST_EXPORT = 'st_last_export_at';
+  const BACKUP_SUFFIX = '__backup';
+  const ALL_KEYS = [LS_STUDENTS, LS_HOMEWORK, LS_ERRORNOTES];
+
+  let storageBroken = false;   // true if writes are failing (quota/unavailable)
+  let dataRecovered = false;   // true if we had to fall back to a backup copy
+  let hasUnexportedChanges = false; // true if data has changed since the last JSON export
+
+  // Reads a key; if the primary copy is corrupt, falls back to the last-known-good
+  // rolling backup instead of silently discarding data.
+  function load(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      if(raw) return JSON.parse(raw);
+    }catch(e){
+      try{
+        const backupRaw = localStorage.getItem(key + BACKUP_SUFFIX);
+        if(backupRaw){
+          dataRecovered = true;
+          return JSON.parse(backupRaw);
+        }
+      }catch(e2){ /* backup also corrupt, fall through */ }
+    }
+    return fallback;
+  }
+
+  // Writes a key. Before overwriting, copies the current good value into a
+  // shadow "__backup" key, so one bad/interrupted write can't destroy the
+  // only copy of the data. Failures (e.g. storage full/unavailable) are
+  // caught and surfaced via a banner instead of being silently swallowed.
+  function save(key, val){
+    try{
+      const existing = localStorage.getItem(key);
+      if(existing !== null){
+        try{ localStorage.setItem(key + BACKUP_SUFFIX, existing); }catch(e){ /* best effort */ }
+      }
+      localStorage.setItem(key, JSON.stringify(val));
+      if(storageBroken){ storageBroken = false; updateBanners(); }
+      if(ALL_KEYS.includes(key) && !hasUnexportedChanges){
+        hasUnexportedChanges = true;
+        updateBanners();
+      }
+      return true;
+    }catch(e){
+      storageBroken = true;
+      updateBanners();
+      return false;
+    }
+  }
+
+  let students = load(LS_STUDENTS, []);
+  let homework = load(LS_HOMEWORK, []);
+  let errorNotes = load(LS_ERRORNOTES, []);
+
+  function saveStudents(){ save(LS_STUDENTS, students); }
+  function saveHomework(){ save(LS_HOMEWORK, homework); }
+  function saveErrorNotes(){ save(LS_ERRORNOTES, errorNotes); }
+  function saveAll(){ saveStudents(); saveHomework(); saveErrorNotes(); }
+
+  function uid(){ return 's_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+  /* ---------------- Banners ---------------- */
+  function bannerHtml(id, type, message, actions){
+    const actionsHtml = (actions||[]).map(a => `<button class="btn btn-sm ${a.cls||'btn-ghost'}" data-banner-action="${a.action}">${a.label}</button>`).join('');
+    return `<div class="banner show banner-${type}" id="${id}">
+      <span>${message}</span>
+      <div class="banner-actions">${actionsHtml}<button class="banner-dismiss" data-banner-action="dismiss-${id}" title="Dismiss">✕</button></div>
+    </div>`;
+  }
+
+  function daysSince(ts){
+    if(!ts) return Infinity;
+    return (Date.now() - ts) / 86400000;
+  }
+
+  let exportReminderDismissed = false;
+
+  function updateBanners(){
+    const area = document.getElementById('bannerArea');
+    if(!area) return;
+    let html = '';
+
+    if(storageBroken){
+      html += bannerHtml('bannerStorage', 'error',
+        '⚠ Changes are not saving — the browser storage for this tracker is full or unavailable. Export a backup now so nothing is lost, then try freeing up space or using a different browser.',
+        [{action:'export', label:'Export Now', cls:'btn-danger'}]);
+    }
+    if(dataRecovered){
+      html += bannerHtml('bannerRecovered', 'warn',
+        'Some saved data looked corrupted on load, so the last known-good backup copy was restored automatically. Please check your records and export a fresh backup.',
+        [{action:'export', label:'Export Now'}]);
+    }
+    if(!storageBroken && hasUnexportedChanges && students.length > 0){
+      html += bannerHtml('bannerUnsaved', 'warn',
+        'You have changes since your last backup. Export before closing this tab so today\'s entries aren\'t lost.',
+        [{action:'export', label:'Export Now'}]);
+    } else if(!storageBroken && !exportReminderDismissed && (students.length > 0) && daysSince(Number(localStorage.getItem(LS_LAST_EXPORT))) > 7){
+      html += bannerHtml('bannerRemind', 'info',
+        'This tracker only saves data in this browser — nothing is backed up elsewhere. It\'s been a while since your last export; consider downloading a backup.',
+        [{action:'export', label:'Export Now'}]);
+    }
+    area.innerHTML = html;
+  }
+
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-banner-action]');
+    if(!t) return;
+    const action = t.dataset.bannerAction;
+    if(action === 'export'){
+      exportBackup();
+    } else if(action.startsWith('dismiss-')){
+      const id = action.slice('dismiss-'.length);
+      if(id === 'bannerRemind') exportReminderDismissed = true;
+      if(id === 'bannerRecovered') dataRecovered = false;
+      updateBanners();
+    }
+  });
+
+  /* ---------------- Export / Import ---------------- */
+  function exportBackup(){
+    const payload = {
+      app: 'student-tracker-backup',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      students, homework, errorNotes
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = todayISO();
+    a.href = url;
+    a.download = `student-tracker-backup-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    try{ localStorage.setItem(LS_LAST_EXPORT, String(Date.now())); }catch(e){ /* ignore */ }
+    exportReminderDismissed = false;
+    hasUnexportedChanges = false;
+    updateBanners();
+  }
+
+  // Warn before closing/navigating away if there are changes not yet in a
+  // downloaded backup. Support varies by browser (and is unreliable on some
+  // mobile browsers), so this is a helpful extra nudge, not a guarantee.
+  window.addEventListener('beforeunload', e => {
+    if(hasUnexportedChanges){
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    }
+  });
+
+  function isValidBackupShape(obj){
+    return obj && typeof obj === 'object'
+      && Array.isArray(obj.students)
+      && Array.isArray(obj.homework)
+      && Array.isArray(obj.errorNotes);
+  }
+
+  function importBackupFile(file){
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed;
+      try{ parsed = JSON.parse(reader.result); }
+      catch(e){ alert('That file is not a valid backup (could not parse JSON).'); return; }
+      if(!isValidBackupShape(parsed)){
+        alert('That file does not look like a Student Tracker backup.');
+        return;
+      }
+      const replace = confirm(
+        `Import backup from ${parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleString() : 'unknown date'}?\n\n` +
+        `This will REPLACE all current data (${students.length} student(s) currently) with the ${parsed.students.length} student(s) in this backup.\n\n` +
+        `Click Cancel to keep your current data instead.`
+      );
+      if(!replace) return;
+      students = parsed.students;
+      homework = parsed.homework;
+      errorNotes = parsed.errorNotes;
+      saveAll();
+      dataRecovered = false;
+      updateBanners();
+      showMain();
+    };
+    reader.onerror = () => alert('Could not read that file.');
+    reader.readAsText(file);
+  }
+
+  /* ---------------- Export: Excel ---------------- */
+  function studentName(id){
+    const s = students.find(st => st.id === id);
+    return s ? s.name : '(removed student)';
+  }
+
+  function exportExcel(){
+    if(typeof XLSX === 'undefined'){
+      alert('The Excel export library did not load (no internet connection?). Please try again.');
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+
+    const studentRows = students.map(s => ({ Name: s.name }));
+    const wsStudents = XLSX.utils.json_to_sheet(studentRows.length ? studentRows : [{Name:''}]);
+    XLSX.utils.book_append_sheet(wb, wsStudents, 'Students');
+
+    const hwSorted = homework.slice().sort((a,b) => a.date === b.date ? studentName(a.student_id).localeCompare(studentName(b.student_id)) : a.date.localeCompare(b.date));
+    const hwRows = hwSorted.map(r => ({
+      Student: studentName(r.student_id),
+      Date: r.date,
+      Maths: r.maths ? 'Yes' : 'No',
+      Physics: r.physics ? 'Yes' : 'No',
+      Chemistry: r.chemistry ? 'Yes' : 'No'
+    }));
+    const wsHw = XLSX.utils.json_to_sheet(hwRows.length ? hwRows : [{Student:'',Date:'',Maths:'',Physics:'',Chemistry:''}]);
+    XLSX.utils.book_append_sheet(wb, wsHw, 'Homework');
+
+    const enSorted = errorNotes.slice().sort((a,b) => a.week === b.week ? studentName(a.student_id).localeCompare(studentName(b.student_id)) : a.week.localeCompare(b.week));
+    const enRows = enSorted.map(r => ({
+      Student: studentName(r.student_id),
+      'Week Of': r.week,
+      Maths: r.maths ? 'Yes' : 'No',
+      Physics: r.physics ? 'Yes' : 'No',
+      Chemistry: r.chemistry ? 'Yes' : 'No'
+    }));
+    const wsEn = XLSX.utils.json_to_sheet(enRows.length ? enRows : [{Student:'',['Week Of']:'',Maths:'',Physics:'',Chemistry:''}]);
+    XLSX.utils.book_append_sheet(wb, wsEn, 'Error Notes');
+
+    XLSX.writeFile(wb, `student-tracker-${todayISO()}.xlsx`);
+  }
+
+  /* ---------------- Export: PDF ---------------- */
+  // Minimal hand-rolled table renderer (no autoTable dependency) so this
+  // works reliably against the exact jsPDF build loaded above.
+  function drawPdfTable(doc, opts){
+    const { startY, headers, rows, colWidths, marginLeft, title } = opts;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const bottomMargin = 40;
+    const rowHeight = 16;
+    let y = startY;
+
+    function drawHeaderRow(){
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      let x = marginLeft;
+      headers.forEach((h, i) => {
+        doc.text(String(h), x, y);
+        x += colWidths[i];
+      });
+      y += 6;
+      doc.setDrawColor(180);
+      doc.line(marginLeft, y, marginLeft + colWidths.reduce((a,b)=>a+b,0), y);
+      y += 10;
+      doc.setFont('helvetica', 'normal');
+    }
+
+    if(title){
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text(title, marginLeft, y);
+      y += 16;
+    }
+    drawHeaderRow();
+
+    if(rows.length === 0){
+      doc.setFontSize(9);
+      doc.setTextColor(120);
+      doc.text('No records.', marginLeft, y);
+      doc.setTextColor(0);
+      y += rowHeight;
+      return y;
+    }
+
+    doc.setFontSize(9);
+    rows.forEach(row => {
+      if(y + rowHeight > pageHeight - bottomMargin){
+        doc.addPage();
+        y = 40;
+        drawHeaderRow();
+      }
+      let x = marginLeft;
+      row.forEach((cell, i) => {
+        doc.text(String(cell), x, y);
+        x += colWidths[i];
+      });
+      y += rowHeight;
+    });
+
+    return y;
+  }
+
+  function exportPdf(){
+    if(typeof jspdf === 'undefined' || !jspdf.jsPDF){
+      alert('The PDF export library did not load (no internet connection?). Please try again.');
+      return;
+    }
+    const { jsPDF } = jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const marginLeft = 40;
+    let y = 50;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text('Student Tracker Report', marginLeft, y);
+    y += 20;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(110);
+    doc.text(`Generated ${new Date().toLocaleString()} — ${students.length} student(s)`, marginLeft, y);
+    doc.setTextColor(0);
+    y += 30;
+
+    const hwSorted = homework.slice().sort((a,b) => a.date === b.date ? studentName(a.student_id).localeCompare(studentName(b.student_id)) : a.date.localeCompare(b.date));
+    const hwRows = hwSorted.map(r => [studentName(r.student_id), r.date, r.maths ? 'Yes' : 'No', r.physics ? 'Yes' : 'No', r.chemistry ? 'Yes' : 'No']);
+    y = drawPdfTable(doc, {
+      startY: y,
+      title: 'Homework Log',
+      headers: ['Student', 'Date', 'Maths', 'Physics', 'Chemistry'],
+      rows: hwRows,
+      colWidths: [160, 80, 60, 60, 70],
+      marginLeft
+    });
+
+    y += 26;
+    if(y > doc.internal.pageSize.getHeight() - 100){
+      doc.addPage();
+      y = 50;
+    }
+
+    const enSorted = errorNotes.slice().sort((a,b) => a.week === b.week ? studentName(a.student_id).localeCompare(studentName(b.student_id)) : a.week.localeCompare(b.week));
+    const enRows = enSorted.map(r => [studentName(r.student_id), r.week, r.maths ? 'Yes' : 'No', r.physics ? 'Yes' : 'No', r.chemistry ? 'Yes' : 'No']);
+    drawPdfTable(doc, {
+      startY: y,
+      title: 'Error Notes Log',
+      headers: ['Student', 'Week Of', 'Maths', 'Physics', 'Chemistry'],
+      rows: enRows,
+      colWidths: [160, 80, 60, 60, 70],
+      marginLeft
+    });
+
+    doc.save(`student-tracker-${todayISO()}.pdf`);
+  }
+
+  document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
+  document.getElementById('exportPdfBtn').addEventListener('click', exportPdf);
+
+  document.getElementById('exportBtn').addEventListener('click', exportBackup);
+  document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    if(file) importBackupFile(file);
+    e.target.value = '';
+  });
+
+  /* ---------------- Cross-tab sync ---------------- */
+  // If this app is open in another tab and data changes there, pick it up here
+  // instead of silently overwriting it on the next save from this tab.
+  window.addEventListener('storage', e => {
+    if(!ALL_KEYS.includes(e.key)) return;
+    // Don't yank the list out from under someone mid-edit of a name.
+    if(editingStudentId) return;
+    students = load(LS_STUDENTS, students);
+    homework = load(LS_HOMEWORK, homework);
+    errorNotes = load(LS_ERRORNOTES, errorNotes);
+    if(view === 'main') renderMain();
+    else if(view === 'records' && recordsStudentId){
+      const stu = students.find(s => s.id === recordsStudentId);
+      if(stu) renderRecords(stu); else showMain();
+    }
+    else if(view === 'pending') renderPending();
+  });
+
+  /* ---------------- Undo toast ---------------- */
+  function showToast(message, onUndo, duration){
+    duration = duration || 8000;
+    const stack = document.getElementById('toastStack');
+    const id = 'toast_' + Date.now();
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.id = id;
+    el.innerHTML = `<span>${message}</span>` + (onUndo ? `<button data-undo>Undo</button>` : '');
+    stack.appendChild(el);
+    let done = false;
+    const finish = () => {
+      if(done) return;
+      done = true;
+      el.remove();
+    };
+    if(onUndo){
+      el.querySelector('[data-undo]').addEventListener('click', () => {
+        onUndo();
+        finish();
+      });
+    }
+    setTimeout(finish, duration);
+  }
+
+  /* ---------------- Date helpers ---------------- */
+  function todayISO(){
+    const d = new Date();
+    return isoFromDate(d);
+  }
+  function isoFromDate(d){
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function dateFromISO(iso){
+    const [y,m,d] = iso.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+  function getMonday(iso){
+    const d = dateFromISO(iso);
+    const day = d.getDay(); // 0=Sun..6=Sat
+    const diff = (day === 0 ? -6 : 1 - day); // shift to Monday
+    d.setDate(d.getDate() + diff);
+    return isoFromDate(d);
+  }
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function formatShort(iso){
+    const d = dateFromISO(iso);
+    return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  }
+  function formatWeekRange(mondayIso){
+    const start = dateFromISO(mondayIso);
+    const end = new Date(start); end.setDate(end.getDate()+6);
+    const sM = MONTHS[start.getMonth()], eM = MONTHS[end.getMonth()];
+    if(sM === eM){
+      return `${sM} ${start.getDate()} – ${end.getDate()}`;
+    }
+    return `${sM} ${start.getDate()} – ${eM} ${end.getDate()}`;
+  }
+
+  /* ---------------- State ---------------- */
+  let currentDate = todayISO();
+  let currentWeek = getMonday(currentDate);
+  let editingStudentId = null;
+  let view = 'main';
+  let recordsStudentId = null;
+  let pendingRemoveId = null;
+  let searchQuery = '';
+
+  /* ---------------- Record accessors ---------------- */
+  function getHomework(studentId, date){
+    return homework.find(r => r.student_id === studentId && r.date === date);
+  }
+  function setHomework(studentId, date, subject, value){
+    let rec = getHomework(studentId, date);
+    if(!rec){
+      rec = { student_id: studentId, date: date, maths:false, physics:false, chemistry:false };
+      homework.push(rec);
+    }
+    rec[subject] = value;
+    saveHomework();
+  }
+  function getErrorNote(studentId, week){
+    return errorNotes.find(r => r.student_id === studentId && r.week === week);
+  }
+  function setErrorNote(studentId, week, subject, value){
+    let rec = getErrorNote(studentId, week);
+    if(!rec){
+      rec = { student_id: studentId, week: week, maths:false, physics:false, chemistry:false };
+      errorNotes.push(rec);
+    }
+    rec[subject] = value;
+    saveErrorNotes();
+  }
+
+  /* ---------------- Icons ---------------- */
+  const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,13 9,18 20,6"></polyline></svg>';
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+
+  /* ---------------- Rendering: main list ---------------- */
+  function checkboxCell(subjectKey, subjClass, subjLabel, checked, dataAttrs){
+    return `
+      <div class="subject-cell ${subjClass}">
+        <span class="subj-name">${subjLabel}</span>
+        <button class="checkbox-btn ${subjClass} ${checked?'checked':''}" ${dataAttrs} aria-pressed="${checked}">
+          ${CHECK_SVG}
+        </button>
+      </div>`;
+  }
+
+  function studentCardHtml(stu){
+    const hw = getHomework(stu.id, currentDate) || {maths:false, physics:false, chemistry:false};
+    const en = getErrorNote(stu.id, currentWeek) || {maths:false, physics:false, chemistry:false};
+
+    const nameHtml = editingStudentId === stu.id
+      ? `<input type="text" class="name-edit-input" id="nameEditInput" value="${escapeHtml(stu.name)}" maxlength="40">`
+      : `<span class="student-name" data-action="edit-name" data-student="${stu.id}">${escapeHtml(stu.name)}</span>`;
+
+    return `
+    <div class="student-card">
+      <div class="card-head">
+        ${nameHtml}
+        <div class="card-actions">
+          <button class="btn btn-ghost btn-sm" data-action="open-records" data-student="${stu.id}">Records</button>
+          <button class="btn btn-ghost btn-sm" data-action="remove-student" data-student="${stu.id}" title="Remove">🗑</button>
+        </div>
+      </div>
+
+      <div class="subject-block">
+        <div class="block-label">Homework — ${formatShort(currentDate)}</div>
+        <div class="subject-grid">
+          ${checkboxCell('maths','maths','Maths', hw.maths, `data-action="toggle-hw" data-student="${stu.id}" data-subject="maths"`)}
+          ${checkboxCell('physics','physics','Physics', hw.physics, `data-action="toggle-hw" data-student="${stu.id}" data-subject="physics"`)}
+          ${checkboxCell('chemistry','chem','Chemistry', hw.chemistry, `data-action="toggle-hw" data-student="${stu.id}" data-subject="chemistry"`)}
+        </div>
+      </div>
+
+      <div class="subject-block">
+        <div class="block-label">Error Notes — ${formatWeekRange(currentWeek)}</div>
+        <div class="subject-grid">
+          ${checkboxCell('maths','maths','Maths', en.maths, `data-action="toggle-en" data-student="${stu.id}" data-subject="maths"`)}
+          ${checkboxCell('physics','physics','Physics', en.physics, `data-action="toggle-en" data-student="${stu.id}" data-subject="physics"`)}
+          ${checkboxCell('chemistry','chem','Chemistry', en.chemistry, `data-action="toggle-en" data-student="${stu.id}" data-subject="chemistry"`)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderMain(){
+    const list = document.getElementById('studentList');
+    if(students.length === 0){
+      list.innerHTML = `<div class="empty-state">
+        <div class="big">No students yet</div>
+        <div>Add your first student above to start the register.</div>
+      </div>`;
+      return;
+    }
+    const q = searchQuery.trim().toLowerCase();
+    const visible = q ? students.filter(s => s.name.toLowerCase().includes(q)) : students;
+    if(visible.length === 0){
+      list.innerHTML = `<div class="empty-state">
+        <div class="big">No matches</div>
+        <div>No student names match "${escapeHtml(searchQuery.trim())}".</div>
+      </div>`;
+      return;
+    }
+    list.innerHTML = visible.map(studentCardHtml).join('');
+    if(editingStudentId){
+      const input = document.getElementById('nameEditInput');
+      if(input){
+        input.focus();
+        input.select();
+      }
+    }
+  }
+
+  /* ---------------- Rendering: records page ---------------- */
+  function markHtml(bool){
+    return bool
+      ? `<span class="mark yes">✓</span>`
+      : `<span class="mark no">✕</span>`;
+  }
+
+  function renderRecords(stu){
+    const hwRecords = homework
+      .filter(r => r.student_id === stu.id)
+      .sort((a,b) => b.date.localeCompare(a.date));
+
+    const enRecords = errorNotes
+      .filter(r => r.student_id === stu.id)
+      .sort((a,b) => b.week.localeCompare(a.week));
+
+    // stats
+    let mSum=0,pSum=0,cSum=0;
+    hwRecords.forEach(r=>{ if(r.maths)mSum++; if(r.physics)pSum++; if(r.chemistry)cSum++; });
+    const hwTotal = hwRecords.length;
+    const overallSum = mSum+pSum+cSum;
+    const overallTotal = hwTotal*3;
+
+    let mW=0,pW=0,cW=0;
+    enRecords.forEach(r=>{ if(r.maths)mW++; if(r.physics)pW++; if(r.chemistry)cW++; });
+    const enTotal = enRecords.length;
+
+    const hwRows = hwRecords.length
+      ? hwRecords.map(r => `
+        <tr>
+          <td>${formatShort(r.date)}</td>
+          <td>${markHtml(r.maths)}</td>
+          <td>${markHtml(r.physics)}</td>
+          <td>${markHtml(r.chemistry)}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="4" class="no-data">No homework recorded yet.</td></tr>`;
+
+    const enRows = enRecords.length
+      ? enRecords.map(r => `
+        <tr>
+          <td>${formatWeekRange(r.week)}</td>
+          <td>${markHtml(r.maths)}</td>
+          <td>${markHtml(r.physics)}</td>
+          <td>${markHtml(r.chemistry)}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="4" class="no-data">No error notes recorded yet.</td></tr>`;
+
+    const view = document.getElementById('recordsView');
+    view.innerHTML = `
+      <div class="records-header">
+        <button class="back-link" id="backBtn" data-action="back">← Back</button>
+        <div class="records-title">${escapeHtml(stu.name)} — Records</div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">Homework History</div>
+        <div class="table-wrap">
+          <table class="reg-table">
+            <thead><tr><th>Date</th><th>Maths</th><th>Physics</th><th>Chemistry</th></tr></thead>
+            <tbody>${hwRows}</tbody>
+          </table>
+        </div>
+        <div class="stats-row">
+          <div class="stat-box maths"><div class="num">${mSum}/${hwTotal}</div><div class="lbl">Maths</div></div>
+          <div class="stat-box physics"><div class="num">${pSum}/${hwTotal}</div><div class="lbl">Physics</div></div>
+          <div class="stat-box chem"><div class="num">${cSum}/${hwTotal}</div><div class="lbl">Chemistry</div></div>
+          <div class="stat-box"><div class="num">${overallSum}/${overallTotal}</div><div class="lbl">Overall</div></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">Error Notes History</div>
+        <div class="table-wrap">
+          <table class="reg-table">
+            <thead><tr><th>Week</th><th>Maths</th><th>Physics</th><th>Chemistry</th></tr></thead>
+            <tbody>${enRows}</tbody>
+          </table>
+        </div>
+        <div class="stats-row">
+          <div class="stat-box maths"><div class="num">${mW}/${enTotal}</div><div class="lbl">Maths weeks</div></div>
+          <div class="stat-box physics"><div class="num">${pW}/${enTotal}</div><div class="lbl">Physics weeks</div></div>
+          <div class="stat-box chem"><div class="num">${cW}/${enTotal}</div><div class="lbl">Chemistry weeks</div></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function showMain(){
+    view = 'main';
+    document.getElementById('mainView').style.display = '';
+    document.getElementById('recordsView').style.display = 'none';
+    document.getElementById('pendingView').style.display = 'none';
+    renderMain();
+  }
+  function showRecords(studentId){
+    const stu = students.find(s => s.id === studentId);
+    if(!stu) return;
+    view = 'records';
+    recordsStudentId = studentId;
+    document.getElementById('mainView').style.display = 'none';
+    document.getElementById('recordsView').style.display = '';
+    document.getElementById('pendingView').style.display = 'none';
+    renderRecords(stu);
+  }
+
+  /* ---------------- Rendering: pending page ---------------- */
+  const SUBJECTS = [
+    {key:'maths', cls:'maths', label:'Maths'},
+    {key:'physics', cls:'physics', label:'Physics'},
+    {key:'chemistry', cls:'chem', label:'Chemistry'}
+  ];
+
+  // Students with no record yet, or an explicit false, count as pending for that subject.
+  function pendingFor(records, subjectKey){
+    return students.filter(stu => {
+      const rec = records.find(r => r.student_id === stu.id);
+      return !rec || !rec[subjectKey];
+    });
+  }
+
+  function pendingSubjectCardHtml(subj, pendingStudents){
+    const listHtml = pendingStudents.length
+      ? `<ul class="pending-list">${pendingStudents.map(s => `<li>${escapeHtml(s.name)}</li>`).join('')}</ul>`
+      : `<div class="pending-all-clear">All caught up 🎉</div>`;
+    return `
+      <div class="pending-subject-card ${subj.cls}">
+        <div class="pending-subject-head">
+          <div class="pending-subject-title">${subj.label}</div>
+          <div class="pending-count">${pendingStudents.length} pending</div>
+        </div>
+        ${listHtml}
+      </div>`;
+  }
+
+  function renderPending(){
+    const pendingEl = document.getElementById('pendingView');
+
+    if(students.length === 0){
+      pendingEl.innerHTML = `
+        <div class="pending-header">
+          <button class="back-link" data-action="back">← Back</button>
+          <div class="records-title">Today's Pending</div>
+        </div>
+        <div class="empty-state">
+          <div class="big">No students yet</div>
+          <div>Add students on the main page first.</div>
+        </div>`;
+      return;
+    }
+
+    const hwRecords = homework.filter(r => r.date === currentDate);
+    const enRecords = errorNotes.filter(r => r.week === currentWeek);
+
+    const hwCards = SUBJECTS.map(subj => pendingSubjectCardHtml(subj, pendingFor(hwRecords, subj.key))).join('');
+    const enCards = SUBJECTS.map(subj => pendingSubjectCardHtml(subj, pendingFor(enRecords, subj.key))).join('');
+
+    pendingEl.innerHTML = `
+      <div class="pending-header">
+        <button class="back-link" data-action="back">← Back</button>
+        <div class="records-title">Today's Pending</div>
+      </div>
+      <p class="pending-sub">Students who don't yet have a ✓ for the selected date / week, by subject.</p>
+
+      <div class="pending-section-title">Homework Pending — ${formatShort(currentDate)}</div>
+      ${hwCards}
+
+      <div class="pending-section-title">Error Notes Pending — ${formatWeekRange(currentWeek)}</div>
+      ${enCards}
+    `;
+  }
+
+  function showPending(){
+    view = 'pending';
+    document.getElementById('mainView').style.display = 'none';
+    document.getElementById('recordsView').style.display = 'none';
+    document.getElementById('pendingView').style.display = '';
+    renderPending();
+  }
+
+  /* ---------------- Header controls ---------------- */
+  function updateWeekRangeDisplay(){
+    document.getElementById('weekRangeDisplay').textContent = formatWeekRange(currentWeek);
+  }
+
+  document.getElementById('hwDate').value = currentDate;
+  document.getElementById('enWeekPicker').value = currentWeek;
+  updateWeekRangeDisplay();
+
+  document.getElementById('hwDate').addEventListener('change', e => {
+    currentDate = e.target.value || todayISO();
+    if(view === 'main') renderMain();
+    else if(view === 'pending') renderPending();
+  });
+
+  document.getElementById('enWeekPicker').addEventListener('change', e => {
+    const val = e.target.value || todayISO();
+    currentWeek = getMonday(val);
+    updateWeekRangeDisplay();
+    if(view === 'main') renderMain();
+    else if(view === 'pending') renderPending();
+  });
+
+  function addStudent(){
+    const input = document.getElementById('newStudentName');
+    const name = input.value.trim();
+    if(!name) return;
+    students.push({ id: uid(), name: name });
+    saveStudents();
+    input.value = '';
+    renderMain();
+  }
+  document.getElementById('addStudentBtn').addEventListener('click', addStudent);
+  document.getElementById('newStudentName').addEventListener('keydown', e => {
+    if(e.key === 'Enter') addStudent();
+  });
+
+  /* ---------------- Search ---------------- */
+  document.getElementById('studentSearch').addEventListener('input', e => {
+    searchQuery = e.target.value;
+    if(view === 'main') renderMain();
+  });
+
+  /* ---------------- Pending page nav ---------------- */
+  document.getElementById('pendingBtn').addEventListener('click', showPending);
+
+  /* ---------------- Remove modal ---------------- */
+  const removeModal = document.getElementById('removeModal');
+  function openRemoveModal(studentId){
+    const stu = students.find(s => s.id === studentId);
+    if(!stu) return;
+    pendingRemoveId = studentId;
+    document.getElementById('removeModalName').textContent = stu.name;
+    removeModal.classList.add('open');
+  }
+  function closeRemoveModal(){
+    removeModal.classList.remove('open');
+    pendingRemoveId = null;
+  }
+  document.getElementById('cancelRemoveBtn').addEventListener('click', closeRemoveModal);
+  document.getElementById('confirmRemoveBtn').addEventListener('click', () => {
+    if(!pendingRemoveId) return;
+    const removedId = pendingRemoveId;
+    // Snapshot everything belonging to this student so the deletion can be undone.
+    const removedStudent = students.find(s => s.id === removedId);
+    const removedHomework = homework.filter(r => r.student_id === removedId);
+    const removedErrorNotes = errorNotes.filter(r => r.student_id === removedId);
+    const removedIndex = students.findIndex(s => s.id === removedId);
+
+    students = students.filter(s => s.id !== removedId);
+    homework = homework.filter(r => r.student_id !== removedId);
+    errorNotes = errorNotes.filter(r => r.student_id !== removedId);
+    saveStudents(); saveHomework(); saveErrorNotes();
+    closeRemoveModal();
+    renderMain();
+
+    if(removedStudent){
+      showToast(`Removed ${escapeHtml(removedStudent.name)}.`, () => {
+        students.splice(Math.min(removedIndex, students.length), 0, removedStudent);
+        homework = homework.concat(removedHomework);
+        errorNotes = errorNotes.concat(removedErrorNotes);
+        saveStudents(); saveHomework(); saveErrorNotes();
+        if(view === 'main') renderMain();
+      });
+    }
+  });
+  removeModal.addEventListener('click', e => {
+    if(e.target === removeModal) closeRemoveModal();
+  });
+
+  /* ---------------- Name editing ---------------- */
+  function commitNameEdit(studentId, newName){
+    const stu = students.find(s => s.id === studentId);
+    if(stu){
+      const trimmed = newName.trim();
+      if(trimmed) stu.name = trimmed;
+      saveStudents();
+    }
+    editingStudentId = null;
+    renderMain();
+  }
+
+  /* ---------------- Event delegation ---------------- */
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-action]');
+    if(!t) return;
+    const action = t.dataset.action;
+    const studentId = t.dataset.student;
+
+    if(action === 'toggle-hw'){
+      const subject = t.dataset.subject;
+      const rec = getHomework(studentId, currentDate);
+      const current = rec ? rec[subject] : false;
+      setHomework(studentId, currentDate, subject, !current);
+      renderMain();
+    } else if(action === 'toggle-en'){
+      const subject = t.dataset.subject;
+      const rec = getErrorNote(studentId, currentWeek);
+      const current = rec ? rec[subject] : false;
+      setErrorNote(studentId, currentWeek, subject, !current);
+      renderMain();
+    } else if(action === 'open-records'){
+      showRecords(studentId);
+    } else if(action === 'remove-student'){
+      openRemoveModal(studentId);
+    } else if(action === 'edit-name'){
+      editingStudentId = studentId;
+      renderMain();
+    } else if(action === 'back'){
+      showMain();
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if(e.target && e.target.id === 'nameEditInput'){
+      if(e.key === 'Enter'){
+        commitNameEdit(editingStudentId, e.target.value);
+      } else if(e.key === 'Escape'){
+        editingStudentId = null;
+        renderMain();
+      }
+    }
+  });
+  document.addEventListener('blur', e => {
+    if(e.target && e.target.id === 'nameEditInput'){
+      commitNameEdit(editingStudentId, e.target.value);
+    }
+  }, true);
+
+  /* ---------------- Init ---------------- */
+  renderMain();
+  updateBanners();
+})();
+</script>
+</body>
+</html>
